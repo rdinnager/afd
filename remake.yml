@@ -5,6 +5,7 @@ packages:
 
 sources:
   - R/function.R
+  - R/ALF.R
   
 targets:
   all:
@@ -12,5 +13,3 @@ targets:
       - report.html
   sim_data:
     command: make_sims()
-
-    
