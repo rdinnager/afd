@@ -1,0 +1,16 @@
+packages:
+  - dplyr
+  - ggplot2
+  - rmarkdown
+
+sources:
+  - R/function.R
+  
+targets:
+  all:
+    depends:
+      - report.html
+  sim_data:
+    command: make_sims()
+
+    
