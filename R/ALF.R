@@ -125,7 +125,7 @@ load_ALF <- function(simdir, which_specs = NULL, return_tree = TRUE, true_align 
   dna <- lapply(paste0(simdir, "/DB/", tl[which_specs]), readDNAStringSet, format="fasta", use.names=TRUE)
   results[["dna"]] <- dna
   names(results$dna) <- labels
-  if (tree) {
+  if (return_tree) {
     tree <- read.tree(paste0(simdir, "/RealTree.nwk"))
     results[["tree"]] <- drop.tip(tree, which(!tree$tip.label %in% labels))
   }
@@ -144,8 +144,8 @@ ALF_cat <- function(ALF_sim) {
 }
 
 ## example
-dir <- "/home/din02g/Testing"
-test <- run_ALF("test", 50, 5, 400, 100, 0.04, 0.025, 0.0001, dir, "/home/din02g/ALF_standalone/bin")
+#dir <- "afd/temp"
+#test <- run_ALF("test", 50, 5, 400, 100, 0.04, 0.025, 0.0001, dir, "/setup_files/ALF_standalone/bin")
 
-testdna <- load_ALF(test, c(1:10))
-testcat <- ALF_cat(testdna)
+#testdna <- load_ALF(test)
+#testcat <- ALF_cat(testdna)
