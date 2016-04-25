@@ -3,7 +3,7 @@ library(whisker)
 library(Biostrings)
 library(ape)
 ALF_template <- function() {
-  "  webRequest := false;
+  "{{{seed}}}webRequest := false;
   uuid := '4e4937bd-70e5-4caf-8521-f4340a4b7e09';
   
   # name of simulation - you may want to change this
@@ -15,22 +15,22 @@ ALF_template <- function() {
   dbAncdir := 'DBancestral/';
   
   # time scale for simulation (PAM is default)
-  unitIsPam := true:
-    
+  unitIsPam := false;
+  
   # parameters concerning the root genome
   realseed := false;
   protStart := {{ngenes}};
   minGeneLength := {{mingenelen}};
   gammaLengthDist := [2.4019, 133.8063];
   blocksize := 3:
-    
+  
   # parameters concerning the species tree
   treeType := 'BDTree';
   birthRate := {{brate}};
   deathRate := {{drate}};
   NSpecies := {{nspec}};
   ultrametric := true;
-  mutRate := {{PAMunits}};
+  mutRate := {{subrate}};
   scaleTree := false;
   
   # parameters concerning the substitution models
@@ -40,7 +40,7 @@ ALF_template <- function() {
   modelAssignments := [1]:
   modelSwitchS := [[1]]:
   modelSwitchD := [[1]]:
-    
+  
   # parameters concerning gene duplication
   geneDuplRate := 0;
   numberDupl := 0;
@@ -61,7 +61,10 @@ ALF_template <- function() {
   
   # parameters concerning rate heterogeneity among genes
   amongGeneDistr := 'Gamma';
-  aGAlpha := 1;"
+  aGAlpha := 1;
+  
+  {{{rearrange}}}
+  "
   
 }
 
@@ -77,10 +80,27 @@ ALF_template <- function() {
 #' @param indelrate Rate at which insertions and deletion are incorporated into genomes
 #' @param dir Directory where the simulated genome should be stored
 #' @export
-gen_ALF_drw <- function(simname, nspec, ngenes, mingenelen, PAMunits, brate, drate, indelrate, dir) {
+gen_ALF_drw <- function(simname, nspec, ngenes, mingenelen, 
+                        subrate, brate, drate, indelrate, dir, seed = NULL, rearrange = FALSE) {
+  if(!is.null(seed)) {
+    seed0 <- paste0("SetRand(", seed, ");\n")
+  } else {
+    seed0 <- ""
+  }
+  if(rearrange){
+    rearrange0 <- "invers := 0.0025;
+      invSize := 5;
+      transloc := 0.025;
+      transSize := 5;
+      invtrans := 0.1;
+      fissionRate := 0;
+      fusionRate := 0;"
+  } else {
+      rearrange0 <- ""
+    }
   parms <- list(simname = simname, nspec = nspec, ngenes = ngenes, mingenelen = mingenelen,
-                PAMunits = PAMunits, brate = brate, drate = drate, indelrate = indelrate,
-                dir = dir)
+                subrate = subrate, brate = brate, drate = drate, indelrate = indelrate,
+                dir = dir, seed = seed0, rearrange = rearrange0)
   whisker.render(ALF_template(), parms) 
 }
 
@@ -98,12 +118,12 @@ gen_ALF_drw <- function(simname, nspec, ngenes, mingenelen, PAMunits, brate, dra
 #' @param ALF_dir Directory containing the \code{alfsim} executable file
 #' @return A character vector containing the path to the directory in which the ALF simulation saves its output.
 #' @export
-run_ALF <- function(simname, nspec, ngenes, mingenelen, PAMunits, brate, drate, indelrate, dir, 
-                    ALF_dir) {
+run_ALF <- function(simname, nspec, ngenes, mingenelen, subrate, brate, drate, indelrate, dir, 
+                    ALF_dir, seed = NULL, rearrange = FALSE) {
   sdir <- paste0(dir, "/", simname)
   filename <- paste0(dir, "/", simname, ".drw")
-  cat(gen_ALF_drw(simname, nspec, ngenes, mingenelen, PAMunits, brate, drate, indelrate, dir), file = filename)
-  system(paste0(ALF_dir, "/alfsim ", filename))
+  cat(gen_ALF_drw(simname, nspec, ngenes, mingenelen, subrate, brate, drate, indelrate, dir, seed, rearrange), file = filename)
+  system(paste0(ALF_dir, "/alfsim ", filename), ignore.stdout = TRUE, ignore.stderr = TRUE)
   return(sdir)
 }
 
@@ -143,9 +163,18 @@ ALF_cat <- function(ALF_sim) {
   return(ALF_sim)
 }
 
+ALF_delete <- function(sim_dir) {
+  system(paste("rm -r", sim_dir))
+}
+
 ## example
-#dir <- "afd/temp"
-#test <- run_ALF("test", 50, 5, 400, 100, 0.04, 0.025, 0.0001, dir, "/setup_files/ALF_standalone/bin")
+#run_ALF <- function(simname, nspec, ngenes, mingenelen, subrate, brate, drate, indelrate, dir, 
+#ALF_dir, seed = NULL)
+#dir <- "temp"
+#test <- run_ALF("test", 50, 5, 400, 1.25, 0.04, 0.025, 0.001, 
+#                dir, "/setup_files/ALF_standalone/bin", NULL, TRUE)
 
 #testdna <- load_ALF(test)
+#ALF_delete(test)
 #testcat <- ALF_cat(testdna)
+

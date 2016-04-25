@@ -2,10 +2,14 @@ packages:
   - dplyr
   - ggplot2
   - rmarkdown
+  - ape
+  - Biostrings
+  - whisker
+  - mefa
 
 sources:
-  - R/function.R
-  - R/ALF.R
+  - /home/rstudio/afd/R/function.R
+  - /home/rstudio/afd/R/ALF.R
   
 targets:
   all:
