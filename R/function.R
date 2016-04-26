@@ -36,3 +36,32 @@ make_sims <- function(num_trees = 150, num_genes = 5, seed = NULL) {
                      .$rearrange))
   sims
 }
+
+#x <- sim_data
+align_sims <- function(x) {
+  #z <- x$sims[[1]]
+  reshape_dna <- function(n, z) {
+    DNAStringSet(sapply(z$dna, function(k) as.character(k[[n]])))
+  }
+  dna <- x %>%
+    rowwise %>%
+    do(dna_sets = lapply(seq_len(.$ngenes), reshape_dna, z = .$sims)) %>%
+    do(dna_sets = do.call(xscat, lapply(.$dna_sets, DNAStringSet)))
+  align <- function(y) {
+    writeXStringSet(y, "temp/tempdna.fasta")
+    system("/muscle/muscle -in /home/rstudio/afd/temp/tempdna.fasta -out /home/rstudio/afd/temp/alignment.fa",
+           ignore.stdout = TRUE, ignore.stderr = TRUE)
+    readDNAMultipleAlignment("/home/rstudio/afd/temp/alignment.fa")
+  }
+  alignments <- dna %>%
+    rowwise %>%
+    do(alignment = align(.$dna_sets))
+  #alignments <- dna %>%
+  #  rowwise %>%
+  #  do(alignment = lapply(.$dna_sets, align))
+  #alignments <- alignments %>%
+  #  rowwise %>%
+  #  do(alignment = do.call(xscat, lapply(.$alignment, DNAStringSet)))
+  alignments
+}
+

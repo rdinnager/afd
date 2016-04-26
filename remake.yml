@@ -17,3 +17,5 @@ targets:
       - report.html
   sim_data:
     command: make_sims()
+  align_data:
+    command: align_sims(sim_data)
