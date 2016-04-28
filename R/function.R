@@ -2,7 +2,7 @@
 #num_trees <- 150
 #num_genes <- 5
 #seed = NULL
-make_sims <- function(num_trees = 150, num_genes = 5, seed = NULL) {
+make_sims <- function(num_trees = 50, num_genes = 5, seed = NULL) {
   #run_ALF <- function(simname, nspec, ngenes, mingenelen, subrate, brate, drate, indelrate, dir, 
   #ALF_dir, seed = NULL)
   if(!is.null(seed)){
@@ -15,7 +15,7 @@ make_sims <- function(num_trees = 150, num_genes = 5, seed = NULL) {
                            brate = 0.04,
                            drate = 0.025,
                            indelrate = runif(num_trees, 0.0001, 0.001),
-                           rearrange = sample(c(TRUE, FALSE), num_trees, replace = TRUE))
+                           rearrange = sample(c(TRUE, FALSE), num_trees, replace = TRUE, prob = c(0.25, 0.75)))
   do_ALF <- function(nspec, ngenes, mingenelen, subrate, brate, drate, indelrate, seed, rearrange) {
     #run_ALF <- function(simname, nspec, ngenes, mingenelen, subrate, brate, drate, indelrate, dir, 
     #ALF_dir, seed = NULL)
@@ -40,22 +40,38 @@ make_sims <- function(num_trees = 150, num_genes = 5, seed = NULL) {
 #x <- sim_data
 align_sims <- function(x) {
   #z <- x$sims[[1]]
-  reshape_dna <- function(n, z) {
-    DNAStringSet(sapply(z$dna, function(k) as.character(k[[n]])))
+  #b <- 5
+  reshape_dna <- function(b, z) {
+    labs <- names(z$dna)
+    seqs <- sapply(z$dna, function(gg) as.character(gg[[b]]))
+    names(seqs) <- labs
+    DNAStringSet(seqs)
+  }
+  #y <- dna$dna_sets[[1]]
+  concat_dna <- function(y) {
+    labs <- names(y[[1]])
+    reord <- lapply(y, function(z) z[labs])
+    reord <- do.call(xscat, reord)
+    names(reord) <- labs
+    reord
   }
   dna <- x %>%
     rowwise %>%
     do(dna_sets = lapply(seq_len(.$ngenes), reshape_dna, z = .$sims)) %>%
-    do(dna_sets = do.call(xscat, lapply(.$dna_sets, DNAStringSet)))
+    do(dna_sets = concat_dna(.$dna_sets))
   align <- function(y) {
     writeXStringSet(y, "temp/tempdna.fasta")
+    start <- Sys.time()
     system("/muscle/muscle -in /home/rstudio/afd/temp/tempdna.fasta -out /home/rstudio/afd/temp/alignment.fa",
            ignore.stdout = TRUE, ignore.stderr = TRUE)
-    readDNAMultipleAlignment("/home/rstudio/afd/temp/alignment.fa")
+    end <- Sys.time()
+    aligned <- readDNAMultipleAlignment("/home/rstudio/afd/temp/alignment.fa")
+    time_taken <- end - start
+    data_frame(alignment = list(aligned), time_taken = time_taken)
   }
   alignments <- dna %>%
     rowwise %>%
-    do(alignment = align(.$dna_sets))
+    do(align(.$dna_sets))
   #alignments <- dna %>%
   #  rowwise %>%
   #  do(alignment = lapply(.$dna_sets, align))
@@ -63,5 +79,17 @@ align_sims <- function(x) {
   #  rowwise %>%
   #  do(alignment = do.call(xscat, lapply(.$alignment, DNAStringSet)))
   alignments
+}
+
+#aligns <- align_data
+raxML_it <- function(aligns) {
+  #x <- aligns$alignment[[1]]
+  get_tree <- function(x) {
+    writeXStringSet(DNAStringSet(x), "temp/alignment.fa")
+    start <- Sys.time()
+    system("/raxml/raxmlHPC-SSE3 -s /home/rstudio/afd/temp/alignment.fa -n tree.phy -m GTRGAMMA -p 1149135 -w /home/rstudio/afd/temp")
+    end <- Sys.time()
+    time_taken <- end - start
+  }
 }
 
