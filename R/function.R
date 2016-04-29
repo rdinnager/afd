@@ -67,7 +67,7 @@ align_sims <- function(x) {
     end <- Sys.time()
     aligned <- readDNAMultipleAlignment("/home/rstudio/afd/temp/alignment.fa")
     time_taken <- end - start
-    data_frame(alignment = list(aligned), time_taken = time_taken)
+    data_frame(alignment = list(aligned), time_taken = list(time_taken))
   }
   alignments <- dna %>%
     rowwise %>%
@@ -90,6 +90,13 @@ raxML_it <- function(aligns) {
     system("/raxml/raxmlHPC-SSE3 -s /home/rstudio/afd/temp/alignment.fa -n tree.phy -m GTRGAMMA -p 1149135 -w /home/rstudio/afd/temp")
     end <- Sys.time()
     time_taken <- end - start
+    tree <- read.tree("/home/rstudio/afd/temp/RAxML_bestTree.tree.phy")
+    file.remove(list.files("/home/rstudio/afd/temp", full.names = TRUE))
+    data_frame(align_tree = list(tree), time_taken = list(time_taken))
   }
+  align_trees <- aligns %>%
+    rowwise %>%
+    do(get_tree(.$alignment))
+  align_trees
 }
 
