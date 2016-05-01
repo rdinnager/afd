@@ -87,7 +87,8 @@ raxML_it <- function(aligns) {
   get_tree <- function(x) {
     writeXStringSet(DNAStringSet(x), "temp/alignment.fa")
     start <- Sys.time()
-    system("/raxml/raxmlHPC-SSE3 -s /home/rstudio/afd/temp/alignment.fa -n tree.phy -m GTRGAMMA -p 1149135 -w /home/rstudio/afd/temp")
+    system("/raxml/raxmlHPC-SSE3 -s /home/rstudio/afd/temp/alignment.fa -n tree.phy -m GTRGAMMA -p 1149135 -w /home/rstudio/afd/temp",
+           ignore.stdout = TRUE, ignore.stderr = TRUE)
     end <- Sys.time()
     time_taken <- end - start
     tree <- read.tree("/home/rstudio/afd/temp/RAxML_bestTree.tree.phy")
