@@ -6,6 +6,7 @@ packages:
   - Biostrings
   - whisker
   - mefa
+  - rPython
 
 sources:
   - /home/rstudio/afd/R/function.R
@@ -19,8 +20,17 @@ targets:
   sim_data:
     command: make_sims()
     
+  fasta_dna:
+    command: fasta_it(sim_data)
+    
   align_data:
-    command: align_sims(sim_data)
+    command: align_sims(fasta_dna)
     
   raxML_trees:
     command: raxML_it(align_data)
+    
+  raxML_trees_ultrametric:
+    command: ultametric_it(raxML_trees)
+    
+  align_free_metrics:
+    command: align_free_it(fasta_dna)

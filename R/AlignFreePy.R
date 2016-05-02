@@ -1,16 +1,17 @@
-require(rPython)
-require(mefa)
-require(ape)
+#require(rPython)
+#require(mefa)
+#require(ape)
 
-doFFP<-function(path,temppath,rep,k=5,ffppath,outpath){
-  dist<-python.call("computeffpvectoranddistances",paste(path,rep,"_All.fa",sep=""),k,ffppath,temppath)
+python.load("/afd-python/SourceCode.py")
+python.load("/afd-python/suffix_tree.py")
+python.exec("import sys")
+python.exec("sys.path.append(\"/afd-python/\")")
+
+do_FFP <- function(fasta, k=5, ffppath, temppath){
+  dist<-python.call("computeffpvectoranddistances",fasta,k,ffppath,temppath)
   dist2<-as.matrix(vec2dist(dist[[2]],length(dist[[1]])))
   colnames(dist2)<-rownames(dist2)<-dist[[1]]
-  write.csv(dist2,file=paste(outpath,rep,"_K_",k,"_FFP_Dist.csv",sep=""))
-  tree<-nj(dist2)
-  write.tree(tree,file=paste(outpath,rep,"_K_",k,"_FFP_NJ_Tree.tre",sep=""))
-  out<-list(Tree=tree,Distance=as.dist(dist2))
-  return(out)
+  return(dist2)
 }
 
 doCVV<-function(path,temppath,rep,k=5,ffppath,outpath){

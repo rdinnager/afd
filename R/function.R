@@ -37,10 +37,7 @@ make_sims <- function(num_trees = 50, num_genes = 5, seed = NULL) {
   sims
 }
 
-#x <- sim_data
-align_sims <- function(x) {
-  #z <- x$sims[[1]]
-  #b <- 5
+fasta_it <- function(sim_data) {
   reshape_dna <- function(b, z) {
     labs <- names(z$dna)
     seqs <- sapply(z$dna, function(gg) as.character(gg[[b]]))
@@ -55,10 +52,18 @@ align_sims <- function(x) {
     names(reord) <- labs
     reord
   }
-  dna <- x %>%
+  dna <- sim_data %>%
     rowwise %>%
     do(dna_sets = lapply(seq_len(.$ngenes), reshape_dna, z = .$sims)) %>%
     do(dna_sets = concat_dna(.$dna_sets))
+  dna
+}
+
+#x <- sim_data
+align_sims <- function(dna) {
+  #z <- x$sims[[1]]
+  #b <- 5
+  
   align <- function(y) {
     writeXStringSet(y, "temp/tempdna.fasta")
     start <- Sys.time()
@@ -99,5 +104,18 @@ raxML_it <- function(aligns) {
     rowwise %>%
     do(get_tree(.$alignment))
   align_trees
+}
+
+do_FFP <- function(temppath, k=5, ffppath, outpath)
+align_free_it <- function(fasta_dna) {
+  dna_sets <- fasta_dna$dna_sets[[1]]
+  do_align_free <- function(dna_sets) {
+    writeXStringSet(dna_sets, "temp/tempdna.fasta")
+    FFP_5 <- do_FFP("temp/tempdna.fasta", ffppath = "/afd-python/ffp-3.19/src", temppath = "temp")
+  }
+  writeXStringSet(y, "temp/tempdna.fasta")
+  align_free <- fasta_dna %>%
+    rowwise %>%
+    do(do_align_free(dna_sets))
 }
 
