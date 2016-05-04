@@ -111,7 +111,10 @@ align_free_it <- function(fasta_dna) {
   dna_sets <- fasta_dna$dna_sets[[1]]
   do_align_free <- function(dna_sets) {
     writeXStringSet(dna_sets, "temp/tempdna.fasta")
-    FFP_5 <- do_FFP("/home/rstudio/afd/temp/tempdna.fasta", ffppath = "/afd-python/ffp-3.19/src/", temppath = "/home/rstudio/afd/temp/vec.txt")
+    path <- "/home/rstudio/afd/temp/tempdna.fasta"
+    dna_names <- names(dna_sets)
+    FFP_5 <- do_FFP(path, ffppath = "/afd-python/ffp-3.19/src/", dna_names)
+    RTD_5 <- doRTD(path, k=5)
   }
   writeXStringSet(y, "temp/tempdna.fasta")
   align_free <- fasta_dna %>%
