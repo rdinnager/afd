@@ -5,9 +5,10 @@
 python.load("/afd-python/SourceCode.py")
 python.load("/afd-python/suffix_tree.py")
 python.exec("import sys")
+python.exec("import numpy")
 python.exec("sys.path.append(\"/afd-python/\")")
 
-do_FFP <- function(fasta, k=5, ffppath, temppath){
+do_FFP <- function(fasta, k=5, ffppath, dna_names){
   #dist<-python.call("computeffpvectoranddistances",fasta,k,ffppath,temppath)
   sh <- paste0('sudo ', ffppath, 'ffpry -l ', k, ' -d -m ', fasta, ' | ', ffppath, 'ffpcol -d | ', ffppath, 'ffprwn | ', ffppath, 'ffpjsd')
   print(sh)
@@ -15,7 +16,10 @@ do_FFP <- function(fasta, k=5, ffppath, temppath){
   #dist2<-as.matrix(vec2dist(dist[[2]],length(dist[[1]])))
   #colnames(dist2)<-rownames(dist2)<-dist[[1]]
   #return(dist2)
-  distvec2 <- do.call(rbind, lapply(FFP_5, function(x) as.numeric(strsplit(x, " ")[[1]])))
+  distvec2 <- do.call(rbind, lapply(distvec, function(x) as.numeric(strsplit(x, " ")[[1]])))
+  rownames(distvec2) <- dna_names
+  colnames(distvec2) <- dna_names
+  distvec2
 }
 
 doCVV<-function(path,temppath,rep,k=5,ffppath,outpath){
@@ -29,20 +33,15 @@ doCVV<-function(path,temppath,rep,k=5,ffppath,outpath){
   return(out)
 }
 
-doRTD<-function(path,rep,k=5,outpath){
-  file<-paste(path,rep,"_All.fa",sep="")
-  python.exec(paste("(names,vectormatrix)=computeRTDfromfastafile(\"",file,"\",",k,")",sep=""))
+doRTD<-function(path, k=5){
+  python.exec(paste("(names,vectormatrix)=computeRTDfromfastafile(\"",path,"\",",k,")",sep=""))
   python.exec("import scipy.spatial.distance")
   python.exec("distancematrix=scipy.spatial.distance.pdist(vectormatrix,'euclidean')") #### methoditem include: 'euclidean','braycurtis','canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine','minkowski','seuclidean' or 'sqeuclidean'
   python.exec("distancematrix2=distancematrix.tolist()")
   dist<-python.get("distancematrix2")
   nn<-python.get("names")
   dist2<-vec2dist(dist,length(nn),nn)
-  write.csv(as.matrix(dist2),file=paste(outpath,rep,"_K_",k,"_RTD_Dist.csv",sep=""))
-  tree<-nj(dist2)
-  write.tree(tree,file=paste(outpath,rep,"_K_",k,"_RTD_NJ_Tree.tre",sep=""))
-  out<-list(Tree=tree,Distance=as.dist(dist2))
-  return(out)
+  return(dist2)
 }
 
 doFCGR<-function(path,rep,k=5,outpath){
